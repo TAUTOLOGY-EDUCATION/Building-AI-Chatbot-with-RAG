@@ -1,0 +1,76 @@
+ 
+
+services:
+  
+
+  backend:
+    build:
+      context: .
+      dockerfile: prod.Dockerfile
+   
+    secrets:
+      - openai.txt
+      - facebook.json
+      - line.json
+      - claude.txt
+
+    labels:
+      - "traefik.http.routers.backend.rule=Host(`rag.raknatee.dev`)"
+      - "traefik.http.routers.backend.service=backend"
+      - "traefik.http.routers.backend.entrypoints=websecure"
+      - "traefik.http.routers.backend.tls.certresolver=myresolver"
+      - "traefik.http.services.backend.loadbalancer.server.port=80"
+  pgvector:
+    image: pgvector/pgvector:0.7.3-pg16
+    environment:
+      POSTGRES_USER: langchain
+      POSTGRES_PASSWORD: langchain
+      POSTGRES_DB: langchain
+    volumes:
+      - vectordb-pg:/var/lib/postgresql/data
+
+  traefik:
+ 
+    image: traefik:v2.8.1
+  
+    ports:
+   
+      - "80:80"
+      - "443:443"
+  
+     
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - acme:/acme
+    environment:
+      
+      - TRAEFIK_PROVIDERS_DOCKER=true
+      - TRAEFIK_ENTRYPOINTS_web=true
+      - TRAEFIK_ENTRYPOINTS_web_ADDRESS=:80
+
+      - TRAEFIK_ENTRYPOINTS_websecure=true
+      - TRAEFIK_ENTRYPOINTS_websecure_ADDRESS=:443
+
+
+      - TRAEFIK_CERTIFICATESRESOLVERS_myresolver=true
+      - TRAEFIK_CERTIFICATESRESOLVERS_myresolver_ACME_EMAIL=tautology.madebyai@gmail.com
+      - TRAEFIK_CERTIFICATESRESOLVERS_myresolver_ACME_STORAGE=/acme/acme.json
+      - TRAEFIK_CERTIFICATESRESOLVERS_myresolver_ACME_HTTPCHALLENGE=true
+      - TRAEFIK_CERTIFICATESRESOLVERS_myresolver_ACME_HTTPCHALLENGE_ENTRYPOINT=web
+
+
+
+volumes:
+  vectordb-pg:
+  acme:
+
+secrets:
+  openai.txt:
+    file: /etc/rag-app/openai.txt
+  facebook.json:
+    file: /etc/rag-app/facebook.json
+  line.json:
+    file: /etc/rag-app/line.json
+  claude.txt:
+    file: /etc/rag-app/claude.txt
+

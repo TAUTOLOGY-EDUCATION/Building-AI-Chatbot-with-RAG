@@ -1,0 +1,46 @@
+ 
+
+services:
+  
+
+  backend:
+    build:
+      context: .
+      dockerfile: dev.Dockerfile
+
+  
+    volumes:
+      - ./container:/container
+      - /container/.venv
+      - ../.vscode-server/container:/root/.vscode-server
+    secrets:
+      - openai.txt
+      - facebook.json
+      - line.json
+      - claude.txt
+    ports:
+      - 80:80
+
+  pgvector:
+    image: pgvector/pgvector:0.7.3-pg16
+    environment:
+      POSTGRES_USER: langchain
+      POSTGRES_PASSWORD: langchain
+      POSTGRES_DB: langchain
+    volumes:
+      - vectordb-pg:/var/lib/postgresql/data
+
+
+
+volumes:
+  vectordb-pg:
+
+secrets:
+  openai.txt:
+    file: ./secrets/openai.txt
+  facebook.json:
+    file: ./secrets/facebook.json
+  line.json:
+    file: ./secrets/line.json
+  claude.txt:
+    file: ./secrets/claude.txt
